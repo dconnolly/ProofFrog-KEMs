@@ -9,7 +9,6 @@ time of writing allows:
 
 ```
 pipx install proof_frog
-
 ```
 
 I recommend [pipx](https://pipx.pypa.io/stable/) as it does the isolated Python environments
