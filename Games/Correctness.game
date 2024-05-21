@@ -1,0 +1,46 @@
+import 'Primitives/KEM.primitive';
+
+// 'A KEM is epsilon-correct if for all (sk, pk) <-$ KeyGen() and (c, k) <-$ Encaps(pk), it holds
+// that Pr[Decaps(sk, c) != k] <= epsilon.'
+
+Game Real(KEM K) {
+    K.EncapsKey ek;
+    K.DecapsKey dk;
+
+    E.EncapsKey * E.DecapsKey Initialize() {
+        K.EncapsKey * K.DecapsKey keypair = K.KeyGen();
+        ek = keypair[0];
+        dk = keypair[1];
+        return keypair;
+    }
+
+    Bool Test() {
+        K.Ciphertext c;
+        K.SharedSecret ss;
+
+        K.Ciphertext * K.SharedSecret encaps_out = K.Encaps(ek);
+        c = encaps_out[0];
+        ss = encaps_out[1];
+
+        K.SharedSecret ssPrime = E.Decaps(dk, c);
+        return ssPrime == ss;
+    }
+}
+
+Game Fake(KEM K) {
+    K.EncapsKey ek;
+    K.DecapsKey dk;
+
+    E.EncapsKey * E.DecapsKey Initialize() {
+        K.EncapsKey * K.DecapsKey keypair = K.KeyGen();
+        ek = keypair[0];
+        dk = keypair[1];
+        return keypair;
+    }
+
+    Bool Test() {
+        return true;
+    }
+}
+
+export as Correctness;

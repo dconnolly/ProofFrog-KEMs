@@ -1,0 +1,11 @@
+// An (implicitly implicit-rejection) KEM (key encapsulation mechanism) primitive model.
+Primitive KEM(Set EncapsKeySpace, Set DecapsKeySpace, Set CiphertextSpace, Set SharedSecretSpace) {
+    Set EncapsKey = EncapsKeySpace;
+    Set DecapsKey = DecapsKeySpace;
+    Set Ciphertext = CiphertextSpace;
+    Set SharedSecret = SharedSecretSpace;
+
+    EncapsKey * DecapsKey KeyGen();
+    Ciphertext * SharedSecret Encaps(EncapsKey ek);
+    SharedSecret Decaps(DecapsKey dk, Ciphertext ct); // Never fails - implicit rejection
+}
