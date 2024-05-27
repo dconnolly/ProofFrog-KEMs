@@ -1,0 +1,11 @@
+// Lifted from Proof Frog's examples.
+//
+// https://github.com/ProofFrog/examples/blob/57e42155069fd7785a8a623648d90a6bfe423407/Primitives/PRF.primitive
+
+Primitive PRF(int lambda, int in, int out) {
+    int lambda = lambda;
+    int in = in;
+    int out = out;
+
+    BitString<out> evaluate(BitString<lambda> seed, BitString<in> input);
+}

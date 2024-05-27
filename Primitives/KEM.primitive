@@ -1,4 +1,5 @@
 // An (implicitly implicit-rejection) KEM (key encapsulation mechanism) primitive model.
+
 Primitive KEM(Set EncapsKeySpace, Set DecapsKeySpace, Set CiphertextSpace, Set SharedSecretSpace) {
     Set EncapsKey = EncapsKeySpace;
     Set DecapsKey = DecapsKeySpace;

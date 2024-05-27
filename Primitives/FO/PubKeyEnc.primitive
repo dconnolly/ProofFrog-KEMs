@@ -1,0 +1,16 @@
+// Lifted from Proof Frog's examples, modified to allow passing in randomness for Enc as in FrodoPKE,
+// transformed via FO with implicit rejection.
+//
+// https://github.com/ProofFrog/examples/blob/57e42155069fd7785a8a623648d90a6bfe423407/Primitives/PubKeyEnc.primitive
+
+Primitive PubKeyEnc(Set MessageSpace, Set CiphertextSpace, Set PKeySpace, Set SKeySpace, Set EncRandomnessSpace) {
+    Set Message = MessageSpace;
+    Set Ciphertext = CiphertextSpace;
+    Set PublicKey = PKeySpace;
+    Set SecretKey = SKeySpace;
+    Set EncRandomness = EncRandomnessSpace;
+
+    PublicKey * SecretKey KeyGen();
+    Ciphertext Enc(PublicKey pk, Message m, EncRandomness r);
+    Message Dec(SecretKey sk, Message m);
+}

@@ -1,0 +1,114 @@
+
+// An instantiation of [FrodoKEM].
+//
+// [FrodoKEM]: https://frodokem.org/files/FrodoKEM-specification-20210604.pdf
+
+import 'Primitives/Hash.primitive';
+import 'Primitives/FO/PubKeyEnc.primitive';
+
+Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) extends KEM {
+    // Constrain the EncapsKey, which is just the FrodoPKE P.PublicKey, to the BitString set.
+    requires P.PublicKey subsets BitString;
+
+    Set EncapsKey = P.PublicKey;
+    Set DecapsKey = P.SecretKey * BitString<len_s> * P.PublicKey * BitString<G1.outputLen>;
+    Set Ciphertext = P.Ciphertext;
+    Set SharedSecret = BitString<F.outputLen>;
+
+    EncapsKey * DecapsKey KeyGen() {
+        // Generate the FrodoPKE IND-CPA keypair.
+        P.PublicKey * P.SecretKey pke_keypair = P.KeyGen();
+        pk = pke_keypair[0];
+        sk = pke_keypair[1];
+
+        // Sample the implict-rejection randomness.
+        BitString<len_s> s <- BitString<len_s>;
+
+        // Hash the PKE public key.
+        //
+        // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
+        // that's not quite allowed yet?
+        g1_seed <- BitString<G1.lambda>;
+        BitString<G1.outputLen> pkh = G1.evaluate(g1_seed, pk);
+
+        // 'Serialize' the keys.
+        EncapsKey ek = pk;
+        DecapsKey dk = [sk, s, pk, pkh];
+
+        // Return the KEM keypair.
+        return [ek, dk];
+    }
+
+    Ciphertext * SharedSecret Encaps(EncapsKey ek) {
+        // Sample the PKE message randomness.
+        BitString<len_s> u <- BitString<len_u>;
+
+        // Hash the KEM encapsulation key, which is also the PKE public key.
+        //
+        // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
+        // that's not quite allowed yet?
+        g1_seed <- BitString<G1.lambda>;
+        BitString<G1.outputLen> pkh = G1.evaluate(g1_seed, ek);
+
+        // Produce the PKE encryption randomness _r_ and intermediate key _k_.
+        //
+        // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
+        // that's not quite allowed yet?
+        g2_seed <- BitString<G2.lambda>;
+        BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u);
+        r = g2_output[0 : G2.outputlen - len_k];
+        k = g2_output[G2.outputlen - len_k : G2.outputLen];
+
+        // Do implicit-rejection-style FrodoPKE IND-CPA encryption.
+        Ciphertext ct = P.Enc(ek, u, r);
+
+        // Derive final shared secret.
+        SharedSecret ss = F.evaluate(ct || k);
+
+        // Return the ciphertext and shared secret.
+        return [ct, ss];
+    }
+
+    SharedSecret Decaps(DecapsKey dk, Ciphertext ct) {
+        // Deserialize the decapsulation key.
+        P.SecretKey sk = dk[0];
+        BitString<len_s> s = dk[1];
+        P.PublicKey pk = dk[2];
+        BitString<G1.outputLen> pkh = dk[3];
+
+        // Decrypt the ciphertext via IND-CPA FrodoPKE.
+        Message u_prime = P.Dec(ct, sk);
+
+        // Independently compute r' and k'.
+        //
+        // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
+        // that's not quite allowed yet?
+        g2_seed <- BitString<G2.lambda>;
+        BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u_prime);
+        r_prime = g2_output[0 : G2.outputlen - len_k];
+        k_prime = g2_output[G2.outputlen - len_k : G2.outputLen];
+
+        // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
+        // that's not quite allowed yet?
+        f_seed <- BitString<F.lambda>;
+
+        // The 'real' shared secret.
+        BitString<F.outputLen1> ss_0 = F.evaluate(f_seed, ct || k_prime);
+
+        // The implicit-rejection shared secret.
+        BitString<F.outputLen1> ss_1 = F.evaluate(f_seed, ct || s);
+
+        // Re-compute the ciphertext.
+        Ciphertext ct_prime = P.Enc(u_prime, pk);
+
+        // If re-computing the ciphertext matches the attacker-provied ciphertext,
+        // return the 'real' shared secret.
+        //
+        // In a real implementation this must be a constant-time comparison.
+        if (ct_prime == ct) {
+            return ss_0;
+        } else {
+            return ss_1;
+        }
+    }
+}
