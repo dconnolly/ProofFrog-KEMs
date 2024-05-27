@@ -1,0 +1,63 @@
+import 'Primitives/KEM.primitive';
+
+// Generic game for binding notions MAL-BIND-P-Q. The adversary can use g to choose
+// whether they want to find a collision between two calls to Encaps, Decaps or a
+// single call to both.
+
+// TODO
+
+Game Left(KEM K) {
+    K.EncapsKey ek;
+    K.DecapsKey dk;
+    K.Ciphertext c_0;
+    K.SharedSecret k_0;
+
+    K.SharedSecret restrainedDecaps(K.Ciphertext c) {
+        if (c_0 == c) {
+            return None;
+        }
+        return K.Decaps(dk, c);
+    }
+
+    K.Ciphertext * K.SharedSecret * K.EncapsKey Initialize() {
+        K.EncapsKey * K.DecapsKey keypair = K.KeyGen();
+        ek = keypair[0];
+        dk = keypair[1];
+
+        K.Ciphertext * K.SharedSecret encaps_out = K.Encaps(ek);
+        c_0 = encaps_out[0];
+        k_0 = encaps_out[1];
+
+        return [c_0, k_0, ek];
+     }
+}
+
+Game Right(KEM K) {
+    K.EncapsKey ek;
+    K.DecapsKey dk;
+    K.Ciphertext c_0;
+    K.SharedSecret k_1;
+
+    K.SharedSecret restrainedDecaps(K.Ciphertext c) {
+        if (c_0 == c) {
+            return None;
+        }
+        return K.Decaps(dk, c);
+    }
+
+    K.Ciphertext * K.SharedSecret * K.EncapsKey Initialize() {
+        K.EncapsKey * K.DecapsKey keypair = K.KeyGen();
+        ek = keypair[0];
+        dk = keypair[1];
+
+        K.Ciphertext * K.SharedSecret encaps_out = K.Encaps(ek);
+        c_0 = encaps_out[0];
+
+        k_1 <- K.SharedSecret;
+
+        return [c_0, k_1, ek];
+     }
+}
+
+
+export as MAL_BIND_P_Q;
