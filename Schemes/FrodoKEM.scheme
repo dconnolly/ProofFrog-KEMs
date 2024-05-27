@@ -55,8 +55,8 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
         // that's not quite allowed yet?
         g2_seed <- BitString<G2.lambda>;
         BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u);
-        r = g2_output[0 : G2.outputlen - len_k];
-        k = g2_output[G2.outputlen - len_k : G2.outputLen];
+        r = g2_output[0 : G2.outputlen - len_s];
+        k = g2_output[G2.outputlen - len_s : G2.outputLen];
 
         // Do implicit-rejection-style FrodoPKE IND-CPA encryption.
         Ciphertext ct = P.Enc(ek, u, r);
@@ -84,8 +84,8 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
         // that's not quite allowed yet?
         g2_seed <- BitString<G2.lambda>;
         BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u_prime);
-        r_prime = g2_output[0 : G2.outputlen - len_k];
-        k_prime = g2_output[G2.outputlen - len_k : G2.outputLen];
+        r_prime = g2_output[0 : G2.outputlen - len_s];
+        k_prime = g2_output[G2.outputlen - len_s : G2.outputLen];
 
         // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
         // that's not quite allowed yet?
