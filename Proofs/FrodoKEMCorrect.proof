@@ -1,0 +1,45 @@
+import 'Primitives/FO/PubKeyEnc.primitive';
+import 'Primitives/Hash.primitive';
+import 'Schemes/FrodoKEM.scheme';
+import 'Games/Hash/Security.game' as HashSecurity;
+import 'Games/KEM/Correctness.game' as KEMCorrectness;
+
+// Reduction R1(DoubleOTP D, Int lambda) compose OTPUniform(lambda) against OneTimeUniformCiphertexts(D).Adversary {
+//     D.Ciphertext CTXT(D.Message m) {
+//         BitString<lambda> k <- BitString<lambda>;
+//         D.Ciphertext c1 = k + m;
+//         BitString<lambda> c2 = challenger.CTXT(c1);
+//         return c2;
+//     }
+// }
+
+proof:
+
+let:
+
+    Set EncapsKeySpace;;
+    Set DecapsKeySpace;
+    Set CiphertextSpace;
+    Set SharedSecretSpace;
+
+    Int lambda;
+
+    P = PubKeyEnc();
+    FrodoKEM FK = FrodoKEM(P, G1, G2, F, lambda);
+
+assume:
+    HashSecurity(G1);
+    HashSecurity(G2);
+    HashSecurity(F);
+
+theorem:
+    KEMCorrectness(FK);
+
+games:
+    OneTimeUniformCiphertexts(D).Real against OneTimeUniformCiphertexts(D).Adversary;
+
+    OTPUniform(lambda).Real compose R1(D, lambda) against OneTimeUniformCiphertexts(D).Adversary;
+
+    OTPUniform(lambda).Random compose R1(D, lambda) against OneTimeUniformCiphertexts(D).Adversary;
+
+    OneTimeUniformCiphertexts(D).Random against OneTimeUniformCiphertexts(D).Adversary;

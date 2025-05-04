@@ -5,12 +5,12 @@
 import 'Primitives/Hash.primitive';
 import 'Primitives/FO/PubKeyEnc.primitive';
 
-Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) extends KEM {
+Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int lambda) extends KEM {
     // Constrain the EncapsKey, which is just the FrodoPKE P.PublicKey, to the BitString set.
     requires P.PublicKey subsets BitString;
 
     Set EncapsKey = P.PublicKey;
-    Set DecapsKey = P.SecretKey * BitString<len_s> * P.PublicKey * BitString<G1.outputLen>;
+    Set DecapsKey = P.SecretKey * BitString<lambda> * P.PublicKey * BitString<G1.outputLen>;
     Set Ciphertext = P.Ciphertext;
     Set SharedSecret = BitString<F.outputLen>;
 
@@ -21,7 +21,7 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
         sk = pke_keypair[1];
 
         // Sample the implict-rejection randomness.
-        BitString<len_s> s <- BitString<len_s>;
+        BitString<lambda> s <- BitString<lambda>;
 
         // Hash the PKE public key.
         //
@@ -40,7 +40,7 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
 
     Ciphertext * SharedSecret Encaps(EncapsKey ek) {
         // Sample the PKE message randomness.
-        BitString<len_s> u <- BitString<len_u>;
+        BitString<lambda> u <- BitString<lambda>;
 
         // Hash the KEM encapsulation key, which is also the PKE public key.
         //
@@ -55,8 +55,8 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
         // that's not quite allowed yet?
         g2_seed <- BitString<G2.lambda>;
         BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u);
-        r = g2_output[0 : G2.outputlen - len_s];
-        k = g2_output[G2.outputlen - len_s : G2.outputLen];
+        r = g2_output[0 : G2.outputlen - lambda];
+        k = g2_output[G2.outputlen - lambda : G2.outputLen];
 
         // Do implicit-rejection-style FrodoPKE IND-CPA encryption.
         Ciphertext ct = P.Enc(ek, u, r);
@@ -71,7 +71,7 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
     SharedSecret Decaps(DecapsKey dk, Ciphertext ct) {
         // Deserialize the decapsulation key.
         P.SecretKey sk = dk[0];
-        BitString<len_s> s = dk[1];
+        BitString<lambda> s = dk[1];
         P.PublicKey pk = dk[2];
         BitString<G1.outputLen> pkh = dk[3];
 
@@ -84,8 +84,8 @@ Scheme FrodoKEM(PubKeyEnc P, Hash G1, Hash G2, Hash F, int len_s, int len_u) ext
         // that's not quite allowed yet?
         g2_seed <- BitString<G2.lambda>;
         BitString<G2.outputLen> g2_output = G2.evaluate(g2_seed, pkh || u_prime);
-        r_prime = g2_output[0 : G2.outputlen - len_s];
-        k_prime = g2_output[G2.outputlen - len_s : G2.outputLen];
+        r_prime = g2_output[0 : G2.outputlen - lambda];
+        k_prime = g2_output[G2.outputlen - lambda : G2.outputLen];
 
         // We would like to 'seed' the collision-resistant function 'globally' in this Scheme but
         // that's not quite allowed yet?
